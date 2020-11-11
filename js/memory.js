@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import styles from '../styles/Home.module.css'
 import game from '../styles/game.module.css'
+import {Howl, Howler} from 'howler';
 
 class Card extends React.Component {
 	constructor(props) {
@@ -55,6 +56,12 @@ class Card extends React.Component {
 
 class Memory extends React.Component {
 	constructor(props) {
+    const flipSound = new Howl({
+      src: ['flip.mp3']
+    });
+    const matchSound = new Howl({
+      src: ['match.mp3']
+    });
 		super(props);
 		this.checkForMatch = this.checkForMatch.bind(this);
 		this.isLocked = this.isLocked.bind(this);
@@ -72,6 +79,10 @@ class Memory extends React.Component {
 			locked: false,
       cards: this.generateCards(),
       matches: 0,
+      sounds: {
+        flip: flipSound,
+        match: matchSound,
+      },
 		};
 	}
 
@@ -86,6 +97,8 @@ class Memory extends React.Component {
 	checkForMatch(cardValue, flip,hide) {
 		const first = this.state.first;
     const second = this.state.second;
+
+    this.state.sounds.flip.play();
 
 		console.log('dumping first...', this.state.first);
 		console.log('dumping second...', this.state.second);
@@ -119,6 +132,7 @@ class Memory extends React.Component {
 						}, () => {
 							if (this.state.first.value == this.state.second.value) {
 								console.log("It's a match!");
+                this.state.sounds.match.play();
                 this.state.first.hide();
                 this.state.second.hide();
                 const matches = this.state.matches;
