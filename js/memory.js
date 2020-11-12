@@ -31,9 +31,6 @@ class Card extends React.Component {
   hide() {
     console.log('hiding card...');
     this.setState({hidden:true});
-    setTimeout(() => {
-
-    }, 1500)
   }
 
   /**
@@ -42,11 +39,12 @@ class Card extends React.Component {
   */
 	render() {
 		return (
-			<div className={`${game.flipCard} animate__animated ${this.state.hidden ? `animate__rotateOut ${game.hidden}`: ''}`} onClick={this.flip}>
+			<div className={`${game.flipCard} animate__animated ${this.state.hidden ? `animate__rotateOut ${game.inactive}`: ''}`} onClick={this.flip}>
 				<div className={`${this.state.active ? game.flipCardInnerActive: game.flipCardInner }`}>
 					<div className={game.flipCardFront}></div>
 					<div className={game.flipCardBack}>
-						<p suppressHydrationWarning>{this.props.value}</p>
+            <div className={game.cardTop} suppressHydrationWarning>{this.props.value}</div>
+            <div className={game.cardBottom} suppressHydrationWarning>{this.props.value}</div>
 					</div>
 				</div>
 			</div>
@@ -57,14 +55,22 @@ class Card extends React.Component {
 class Memory extends React.Component {
 	constructor(props) {
     const flipSound = new Howl({
-      src: ['flip.mp3']
+      src: ['/sounds/flip.mp3'],
+      volume: 0.2,
     });
     const matchSound = new Howl({
-      src: ['match.mp3']
+      src: ['/sounds/match.mp3'],
+      volume: 0.2,
+    });
+    const winSound = new Howl({
+      src: ['/sounds/win.mp3'],
+      loop: true,
+      volume: 0.05,
     });
 		super(props);
 		this.checkForMatch = this.checkForMatch.bind(this);
 		this.isLocked = this.isLocked.bind(this);
+    this.replay = this.replay.bind(this);
 		this.state = {
 			first: {
 				value: null,
@@ -82,6 +88,7 @@ class Memory extends React.Component {
       sounds: {
         flip: flipSound,
         match: matchSound,
+        win: winSound,
       },
 		};
 	}
@@ -136,12 +143,14 @@ class Memory extends React.Component {
                 this.state.first.hide();
                 this.state.second.hide();
                 const matches = this.state.matches;
-                let _this = this;
                 this.setState({matches:matches+1}, () => {
-                  if (_this.state.matches == _this.props.pairs) {
+                  if (this.state.matches == this.props.pairs) {
+                    this.setState({
+                      cards: [],
+                    });
                     setTimeout(() => {
-                      alert("You win!");
-                    }, 1000);
+                      this.state.sounds.win.play();
+                    }, 500);
                   }
                 });
 							} else {
@@ -190,7 +199,7 @@ class Memory extends React.Component {
     const max = 13;
     let cards = [];
     for (let i = 1; i <= this.props.pairs; i++) {
-      let value = Math.floor(Math.random() * Math.floor(max)) + 1;
+      let value = this.convertFaceCards(Math.floor(Math.random() * Math.floor(max)) + 1);
       cards.push({
         value: value,
         key: Math.random(),
@@ -204,13 +213,53 @@ class Memory extends React.Component {
     return cards.sort(() => Math.random() - 0.5);
   }
 
+  convertFaceCards(value) {
+    switch(value) {
+      case 1:
+        return 'A';
+      case 11:
+        return 'J';
+      case 12:
+        return 'Q';
+      case 13:
+        return 'K';
+      default:
+        return value;
+    }
+  }
+
+  replay() {
+    this.state.sounds.win.stop();
+    this.setState({
+      matches: 0,
+      cards: this.generateCards(),
+    });
+  }
+
 	render() {
     const _this = this;
     return (
-        <div className={styles.grid}>
-          {this.state.cards.map((card) => {
-            return _this.renderCard(card.value, card.key)
-          })}
+        <div>
+          <main className={styles.main}>
+            <h1 className={styles.title}>
+              Memory
+            </h1>
+
+            <p className={styles.description}>
+              Choose any card to start
+            </p>
+          </main>
+          <div className={(this.state.matches == this.props.pairs) ? `animate__animated animate__rollIn ${game.winScreen}`: game.hidden}>
+            <div className={styles.grid}>
+              <button className={`animate__animated animate__heartBeat animate__infinite infinite`} onClick={this.replay}>Play Again</button>
+              <img src="/nana.gif" width="300" />
+            </div>
+          </div>
+          <div className={styles.grid}>
+            {this.state.cards.map((card) => {
+              return _this.renderCard(card.value, card.key)
+            })}
+          </div>
         </div>
     );
 	}

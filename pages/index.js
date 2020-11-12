@@ -11,17 +11,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Memory
-        </h1>
-
-        <p className={styles.description}>
-          Choose any card to start
-        </p>
-
-        <Memory pairs={12} />
-      </main>
+      <Memory pairs={12} />
     </div>
   )
 }
