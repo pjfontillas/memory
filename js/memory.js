@@ -90,6 +90,8 @@ class Memory extends React.Component {
         match: matchSound,
         win: winSound,
       },
+      start: null,
+      timer: null,
 		};
 	}
 
@@ -111,6 +113,13 @@ class Memory extends React.Component {
 		console.log('dumping second...', this.state.second);
 
 		if (cardValue != null) {
+      if (this.state.start == null) {
+        const date = Date.now();
+        this.setState({
+          start: date,
+        });
+      }
+
 			if (first.value == null) {
 				console.log("Storing first value:", cardValue);
 				this.setState({
@@ -142,6 +151,11 @@ class Memory extends React.Component {
                 this.state.sounds.match.play();
                 this.state.first.hide();
                 this.state.second.hide();
+
+                this.setState({
+                  timer: ((Date.now() - this.state.start) / 1000).toFixed(2),
+                });
+
                 const matches = this.state.matches;
                 this.setState({matches:matches+1}, () => {
                   if (this.state.matches == this.props.pairs) {
@@ -233,16 +247,21 @@ class Memory extends React.Component {
     this.setState({
       matches: 0,
       cards: this.generateCards(),
+      start: null,
+      timer: null,
     });
   }
 
 	render() {
     const _this = this;
+    const titleStyle = {
+      color: '#ca2f35',
+    };
     return (
         <div>
           <main className={styles.main}>
             <h1 className={styles.title}>
-              Memory
+              Me<span style={titleStyle}>mory</span>
             </h1>
 
             <p className={styles.description}>
@@ -251,7 +270,10 @@ class Memory extends React.Component {
           </main>
           <div className={(this.state.matches == this.props.pairs) ? `animate__animated animate__rollIn ${game.winScreen}`: game.hidden}>
             <div className={styles.grid}>
-              <button className={`animate__animated animate__heartBeat animate__infinite infinite`} onClick={this.replay}>Play Again</button>
+              <div>
+                <p>Time: {this.state.timer}s</p>
+                <button className={`animate__animated animate__heartBeat animate__infinite infinite`} onClick={this.replay}>Play Again</button>
+              </div>
               <img src="/nana.gif" width="300" />
             </div>
           </div>
