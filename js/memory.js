@@ -3,33 +3,45 @@ import styles from '../styles/Home.module.css'
 import game from '../styles/game.module.css'
 import {Howl, Howler} from 'howler';
 
+/**
+ * Individual card implementation, responsible for handling
+ * flipping of cards and reporting value to parent game
+ * component. Also makes itself inactive after a match.
+ */
 class Card extends React.Component {
 	constructor(props) {
 		super(props);
 		this.flip = this.flip.bind(this);
     this.hide = this.hide.bind(this);
 		this.state = {
-			active: false,
+			active: false, // by default all card values are hidden
 		};
 	}
 
+  /**
+   * Visually flips the card by toggling the active state that is
+   * then used in the render function. Also reports card value
+   * to parent game component to check for matches.
+   */
 	flip() {
-		const currentState = this.state.active;
 		if (this.props.isLocked() || this.state.hidden) return;
 
-		this.setState({ active: !currentState });
-		console.log('flipping card(' + this.props.value + ') state: ', !currentState);
-		if (!currentState) {
-			console.log('sending card value...', this.props.value);
-			this.props.onFlip(this.props.value, this.flip, this.hide);
-		} else {
-			console.log('sending null...');
-			this.props.onFlip(null, null);
-		}
+    // toggle active state from true to false or vice versa
+		this.setState({ active: !this.state.active }, () => {
+      // sends card value if active
+      if (this.state.active) {
+        this.props.onFlip(this.props.value, this.flip, this.hide);
+      } else {
+        // sends null to clear data sent to parent game component
+        this.props.onFlip(null, null);
+      }
+    });
 	}
 
+  /**
+   * Hides card by activating hidden state styling through state.
+   */
   hide() {
-    console.log('hiding card...');
     this.setState({hidden:true});
   }
 
@@ -40,7 +52,7 @@ class Card extends React.Component {
 	render() {
 		return (
 			<div className={`${game.flipCard} animate__animated ${this.state.hidden ? `animate__rotateOut ${game.inactive}`: ''}`} onClick={this.flip}>
-				<div className={`${this.state.active ? game.flipCardInnerActive: game.flipCardInner }`}>
+				<div className={`${game.flipCardInner} ${this.state.active ? game.flipCardInnerActive: '' }`}>
 					<div className={game.flipCardFront}></div>
 					<div className={game.flipCardBack}>
             <div className={game.cardTop} suppressHydrationWarning>{this.props.value}</div>
@@ -52,21 +64,12 @@ class Card extends React.Component {
 	}
 }
 
+/**
+ * Game component responsible for generating and tracking cards. Tracks
+ * matches and triggers audio cues to match animations.
+ */
 class Memory extends React.Component {
 	constructor(props) {
-    const flipSound = new Howl({
-      src: ['/sounds/flip.mp3'],
-      volume: 0.2,
-    });
-    const matchSound = new Howl({
-      src: ['/sounds/match.mp3'],
-      volume: 0.2,
-    });
-    const winSound = new Howl({
-      src: ['/sounds/win.mp3'],
-      loop: true,
-      volume: 0.05,
-    });
 		super(props);
 		this.checkForMatch = this.checkForMatch.bind(this);
 		this.isLocked = this.isLocked.bind(this);
@@ -74,45 +77,78 @@ class Memory extends React.Component {
 		this.state = {
 			first: {
 				value: null,
-				flip: null,
-        hide: null,
+				flip: null, // reference to card's flip function, flips it back down if no match
+        hide: null, // reference to card's hide fn, hides/disables it on match
 			},
 			second: {
 				value: null,
 				flip: null,
         hide: null,
 			},
-			locked: false,
-      cards: this.generateCards(),
-      matches: 0,
+			locked: false, // used to lock all other cards when 2 are already flipped
+      cards: this.generateCards(), // holds array of card objects
+      matches: 0, // used to track win condition
       sounds: {
-        flip: flipSound,
-        match: matchSound,
-        win: winSound,
+        flip: null,
+        match: null,
+        win: null,
       },
-      start: null,
-      timer: null,
+      start: null, // date created on first flip
+      timer: null, // time elapsed since first flip and last match
 		};
 	}
 
-	renderCard(value, key) {
-		return <Card value={value} key={key} onFlip={this.checkForMatch} isLocked={this.isLocked} />;
-	}
-
+  /**
+   * Used to broadcast locked status to cards, toggling whether they can
+   * flip or not.
+   *
+   * @return {boolean} Game card lock status.
+   */
 	isLocked() {
 		return this.state.locked;
 	}
 
-	checkForMatch(cardValue, flip,hide) {
+  /**
+   * After every flip checks for matching cards.
+   * Also handles playing audio to match animations.
+   *
+   * @param {number|string} cardValue.
+   * @param {function} flip Reference to card component function to flip card.
+   * @param {function} hide Reference to card component function to disable card.
+   */
+	checkForMatch(cardValue, flip, hide) {
 		const first = this.state.first;
     const second = this.state.second;
 
-    this.state.sounds.flip.play();
+    // Initializing sounds after user interaction.
+    // https://developers.google.com/web/updates/2017/09/autoplay-policy-changes#webaudio
+    if (!this.state.sounds.flip) {
+      this.setState({
+        sounds: {
+          flip: new Howl({
+            src: ['/sounds/flip.mp3'],
+            volume: 0.2,
+          }),
+          match: new Howl({
+            src: ['/sounds/match.mp3'],
+            volume: 0.2,
+          }),
+          win: new Howl({
+            src: ['/sounds/win.mp3'],
+            loop: true,
+            volume: 0.05,
+          }),
+        },
+      }, () => {
+        this.state.sounds.flip.play();
+      });
+    } else {
+      this.state.sounds.flip.play();
+    }
 
-		console.log('dumping first...', this.state.first);
-		console.log('dumping second...', this.state.second);
-
+    // non-null values are face up cards
 		if (cardValue != null) {
+      // start game timer
       if (this.state.start == null) {
         const date = Date.now();
         this.setState({
@@ -120,8 +156,8 @@ class Memory extends React.Component {
         });
       }
 
+      // set first card value if empty
 			if (first.value == null) {
-				console.log("Storing first value:", cardValue);
 				this.setState({
 					first: {
 						value: cardValue,
@@ -130,35 +166,37 @@ class Memory extends React.Component {
 					},
 				});
 			} else {
-				console.log("Storing second value:", cardValue);
+        // set second card value
 				this.setState({
 					second: {
 						value: cardValue,
 						flip: flip,
             hide: hide,
 					},
-					locked: true,
+					locked: true, // locks game, preventing other cards from flipping
 				}, () => {
-					// compare the values
-					console.log("Comparing values...");
-
+          // 1s timeout lets animation play out
 					setTimeout(() => {
 						this.setState({
 							locked: false,
 						}, () => {
 							if (this.state.first.value == this.state.second.value) {
-								console.log("It's a match!");
                 this.state.sounds.match.play();
                 this.state.first.hide();
                 this.state.second.hide();
 
+                let matches = this.state.matches;
                 this.setState({
-                  timer: ((Date.now() - this.state.start) / 1000).toFixed(2),
-                });
-
-                const matches = this.state.matches;
-                this.setState({matches:matches+1}, () => {
+                  matches: ++matches
+                }, () => {
+                  // game win condition
                   if (this.state.matches == this.props.pairs) {
+                    // game end timer set to 2 decimal places
+                    this.setState({
+                      timer: ((Date.now() - this.state.start) / 1000).toFixed(2),
+                    });
+
+                    // resets cards to clear game board
                     this.setState({
                       cards: [],
                     });
@@ -168,10 +206,11 @@ class Memory extends React.Component {
                   }
                 });
 							} else {
-								console.log("No match...");
+                // flip face-up cards back down
 								this.state.first.flip();
 								this.state.second.flip();
 							}
+              // reset stored cards after match
 							this.setState({
 								first: {
 									value: null,
@@ -189,6 +228,7 @@ class Memory extends React.Component {
 				});
 			}
 		} else {
+      // null removes stored cards
       if (second.value != null) {
         this.setState({
           second: {
@@ -209,6 +249,11 @@ class Memory extends React.Component {
     }
 	}
 
+  /**
+   * Generates pairs of playing cards and randomly sorts them.
+   *
+   * @return {array<object>} Array of paired and randomly sorted cards.
+   */
   generateCards() {
     const max = 13;
     let cards = [];
@@ -223,10 +268,15 @@ class Memory extends React.Component {
         key: Math.random(),
       });
     }
-    console.log('dumping cards...', cards);
-    return cards.sort(() => Math.random() - 0.5);
+    return cards.sort(() => Math.random() - 0.5); // close enough random sort hack
   }
 
+  /**
+   * Converts numbers to face cards.
+   *
+   * @param {number} value
+   * @return {number|string}
+   */
   convertFaceCards(value) {
     switch(value) {
       case 1:
@@ -242,6 +292,9 @@ class Memory extends React.Component {
     }
   }
 
+  /**
+   * Resets game so user can play again.
+   */
   replay() {
     this.state.sounds.win.stop();
     this.setState({
@@ -259,7 +312,7 @@ class Memory extends React.Component {
     };
     return (
         <div>
-          <main className={styles.main}>
+          <main>
             <h1 className={styles.title}>
               Me<span style={titleStyle}>mory</span>
             </h1>
@@ -277,9 +330,9 @@ class Memory extends React.Component {
               <img src="/nana.gif" width="300" />
             </div>
           </div>
-          <div className={styles.grid}>
+          <div className={`${styles.grid} animate__animated animate__jackInTheBox`}>
             {this.state.cards.map((card) => {
-              return _this.renderCard(card.value, card.key)
+              return <Card value={card.value} key={card.key} onFlip={this.checkForMatch} isLocked={this.isLocked} />;
             })}
           </div>
         </div>
