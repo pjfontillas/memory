@@ -1,7 +1,8 @@
-import React, { Component } from 'react'
+import React from 'react'
 import styles from '../styles/Home.module.css'
 import game from '../styles/game.module.css'
-import {Howl, Howler} from 'howler';
+import { Howl } from 'howler';
+import PropTypes from 'prop-types'
 
 /**
  * Individual card implementation, responsible for handling
@@ -9,6 +10,17 @@ import {Howl, Howler} from 'howler';
  * component. Also makes itself inactive after a match.
  */
 class Card extends React.Component {
+  static get propTypes() {
+      return {
+          isLocked: PropTypes.bool,
+          onFlip: PropTypes.func,
+          value: PropTypes.oneOfType([
+            PropTypes.number,
+            PropTypes.string,
+          ]),
+      };
+  }
+
 	constructor(props) {
 		super(props);
 		this.flip = this.flip.bind(this);
@@ -69,6 +81,12 @@ class Card extends React.Component {
  * matches and triggers audio cues to match animations.
  */
 class Memory extends React.Component {
+  static get propTypes() {
+      return {
+          pairs: PropTypes.number,
+      };
+  }
+
 	constructor(props) {
 		super(props);
 		this.checkForMatch = this.checkForMatch.bind(this);
@@ -308,7 +326,6 @@ class Memory extends React.Component {
   }
 
 	render() {
-    const _this = this;
     const titleStyle = {
       color: '#ca2f35',
     };
