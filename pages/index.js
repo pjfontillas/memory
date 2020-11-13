@@ -1,7 +1,6 @@
 import Head from 'next/head'
 import styles from '../styles/Home.module.css'
-import '../node_modules/animate.css/animate.min.css'
-import Memory from '../js/memory.js'
+import { Memory } from '../js/memory.js'
 
 export default function Home() {
   return (

@@ -51,12 +51,12 @@ class Card extends React.Component {
   */
 	render() {
 		return (
-			<div className={`${game.flipCard} animate__animated ${this.state.hidden ? `animate__rotateOut ${game.inactive}`: ''}`} onClick={this.flip}>
+			<div data-testid={`card-${this.props.value}`} className={`${game.flipCard} animate__animated ${this.state.hidden ? `animate__rotateOut ${game.inactive}`: ''}`} onClick={this.flip}>
 				<div className={`${game.flipCardInner} ${this.state.active ? game.flipCardInnerActive: '' }`}>
 					<div className={game.flipCardFront}></div>
 					<div className={game.flipCardBack}>
-            <div className={game.cardTop} suppressHydrationWarning>{this.props.value}</div>
-            <div className={game.cardBottom} suppressHydrationWarning>{this.props.value}</div>
+            <div className={game.cardTop} suppressHydrationWarning>{`${this.state.active ? this.props.value : '0'}`}</div>
+            <div className={game.cardBottom} suppressHydrationWarning>{`${this.state.active ? this.props.value : '0'}`}</div>
 					</div>
 				</div>
 			</div>
@@ -255,10 +255,12 @@ class Memory extends React.Component {
    * @return {array<object>} Array of paired and randomly sorted cards.
    */
   generateCards() {
-    const max = 13;
+    //const max = 13;
     let cards = [];
+    // tweaked for loop to do 2-13, all but Aces
     for (let i = 1; i <= this.props.pairs; i++) {
-      let value = this.convertFaceCards(Math.floor(Math.random() * Math.floor(max)) + 1);
+      //let value = this.convertFaceCards(Math.floor(Math.random() * Math.floor(max)) + 1);
+      let value = this.convertFaceCards(i + 1);
       cards.push({
         value: value,
         key: Math.random(),
@@ -340,4 +342,7 @@ class Memory extends React.Component {
 	}
 }
 
-export default Memory
+export {
+  Memory,
+  Card,
+}
