@@ -21,8 +21,8 @@ describe('Memory game', () => {
     const firstCard = cards[0];
     const secondCard = cards[1];
 
-    expect(firstCard).toHaveTextContent('0');
-    expect(secondCard).toHaveTextContent('0');
+    expect(firstCard).toHaveTextContent('-');
+    expect(secondCard).toHaveTextContent('-');
 
     // flip card
     userEvent.click(firstCard);

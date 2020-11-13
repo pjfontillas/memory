@@ -12,7 +12,7 @@ import PropTypes from 'prop-types'
 class Card extends React.Component {
   static get propTypes() {
       return {
-          isLocked: PropTypes.bool,
+          isLocked: PropTypes.func,
           onFlip: PropTypes.func,
           value: PropTypes.oneOfType([
             PropTypes.number,
@@ -67,8 +67,8 @@ class Card extends React.Component {
 				<div className={`${game.flipCardInner} ${this.state.active ? game.flipCardInnerActive: '' }`}>
 					<div className={game.flipCardFront}></div>
 					<div className={game.flipCardBack}>
-            <div className={game.cardTop} suppressHydrationWarning>{`${this.state.active ? this.props.value : '0'}`}</div>
-            <div className={game.cardBottom} suppressHydrationWarning>{`${this.state.active ? this.props.value : '0'}`}</div>
+            <div className={game.cardTop} suppressHydrationWarning>{`${this.state.active ? this.props.value : '-'}`}</div>
+            <div className={game.cardBottom} suppressHydrationWarning>{`${this.state.active ? this.props.value : '-'}`}</div>
 					</div>
 				</div>
 			</div>
