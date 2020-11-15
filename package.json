@@ -8,6 +8,8 @@
     "start": "next start",
     "test": "jest"
   },
+  "author": "Patrick James Fontillas <pjfontillas@gmail.com>",
+  "license": "MIT",
   "dependencies": {
     "animate.css": "^4.1.1",
     "howler": "^2.2.1",
